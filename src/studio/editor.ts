@@ -1,4 +1,4 @@
-import { ActiveSelection, Canvas, Circle, FabricImage, FabricObject, Path, Point, Textbox } from "fabric";
+import { ActiveSelection, Canvas, Circle, FabricImage, FabricObject, Path, Point, Textbox, cache } from "fabric";
 import type { Product } from "@/lib/products";
 import type { FontSet } from "./fonts";
 
@@ -151,6 +151,20 @@ export class DesignEditor {
     });
     const mtr = o.controls?.mtr;
     if (mtr) mtr.offsetY = -32 * r;
+  }
+
+  /** Re-measure all text, for when a design font finishes loading after the editor opened. */
+  refreshText() {
+    if (this.disposed) return;
+    cache.clearFontCache();
+    this.canvas.getObjects().forEach((o) => {
+      if (o instanceof Textbox) {
+        o.initDimensions();
+        o.setCoords();
+        o.set({ dirty: true });
+      }
+    });
+    this.canvas.requestRenderAll();
   }
 
   /* --------------------------- events ----------------------------- */

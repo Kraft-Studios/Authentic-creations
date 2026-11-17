@@ -25,14 +25,21 @@ export const FONT_SET: FontSet = {
   serif: FONTS[3].family,
 };
 
-/** Make sure every design font is downloaded before the editor draws text with it. */
-export async function loadStudioFonts() {
+let allFonts: Promise<void> = Promise.resolve();
+/** Resolves when every design font has finished downloading (however long that takes). */
+export const studioFontsLoaded = () => allFonts;
+
+/**
+ * Download the design fonts before the editor draws text with them, but never keep the
+ * customer waiting more than `maxWaitMs`: on a slow phone connection the studio opens
+ * anyway, and the text is re-measured once the fonts arrive (see `studioFontsLoaded`).
+ */
+export async function loadStudioFonts(maxWaitMs = 4000) {
   if (typeof document === "undefined" || !document.fonts) return;
-  try {
-    await Promise.all(
-      FONTS.flatMap((f) => [document.fonts.load(`400 64px ${f.family}`), document.fonts.load(`700 64px ${f.family}`)]),
-    );
-  } catch {
-    /* fall back to whatever is available */
-  }
+  allFonts = Promise.all(
+    FONTS.flatMap((f) => [document.fonts.load(`400 64px ${f.family}`), document.fonts.load(`700 64px ${f.family}`)]),
+  )
+    .then(() => undefined)
+    .catch(() => undefined); // fall back to whatever is available
+  await Promise.race([allFonts, new Promise<void>((resolve) => setTimeout(resolve, maxWaitMs))]);
 }
