@@ -142,7 +142,7 @@ function Segmented<T extends string>({
               small ? "px-2.5 py-1 text-[12px]" : "px-2 py-1.5 text-[13px]"
             } ${on ? "bg-raise text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)]" : "text-dim hover:text-fg"}`}
           >
-            {o.icon && <Icon name={o.icon} className="h-[15px] w-[15px]" />}
+            {o.icon && <Icon name={o.icon} className="h-[15px] w-[15px] max-[349px]:hidden" />}
             {o.label}
             {o.dot && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-fg" aria-hidden />}
           </button>
@@ -733,7 +733,7 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
 
   /* ------------------------------- layout ------------------------------- */
   return (
-    <div className={`${interTight.variable} studio-grid h-[100dvh] overflow-hidden bg-bg pt-16 font-ui`}>
+    <div className={`${interTight.variable} studio-grid fixed inset-0 overflow-hidden overscroll-none bg-bg pt-16 font-ui`}>
       <h1 className="sr-only">{SITE.name} 3D design studio</h1>
 
       {/* 3D preview */}
@@ -748,8 +748,8 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
           active={desktop || view === "3d"}
         />
 
-        <div className="pointer-events-none absolute left-0 top-0 p-4 lg:p-6">
-          <p className="font-sans text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-[-0.02em]">{product.name}</p>
+        <div className="pointer-events-none absolute left-0 top-0 max-w-[calc(100%-9.5rem)] p-4 lg:max-w-none lg:p-6">
+          <p className="truncate font-sans text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-[-0.02em]">{product.name}</p>
           <p className="mt-0.5 text-[13px] tabular-nums text-dim">
             {product.price != null ? `${formatPrice(product.price)} each` : "Priced on request"}
           </p>
@@ -798,7 +798,7 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
         <div className="sa-tabs border-b border-line bg-bg p-3 lg:px-5 lg:pb-4 lg:pt-5">
           <Segmented label="Studio tools" value={tab} onChange={setTab} options={tabs} />
         </div>
-        <div className={`sa-panel thin-scroll min-h-0 overflow-y-auto p-4 lg:flex-1 lg:p-5 ${tab === "edit" ? "hidden" : ""}`}>
+        <div className={`sa-panel thin-scroll min-h-0 overflow-y-auto overscroll-contain p-4 lg:flex-1 lg:p-5 ${tab === "edit" ? "hidden" : ""}`}>
           {tab === "product" ? productPanel : tab === "templates" ? templatesPanel : addPanel}
         </div>
       </div>
@@ -864,7 +864,7 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
           <p className="mt-2.5 hidden text-[12px] leading-snug text-dim lg:block">Keep names and faces inside the dashed line.</p>
         </section>
 
-        <div className={`sa-panel thin-scroll min-h-0 overflow-y-auto p-4 lg:flex-1 lg:p-5 ${!desktop && tab !== "edit" ? "hidden" : ""}`}>
+        <div className={`sa-panel thin-scroll min-h-0 overflow-y-auto overscroll-contain p-4 lg:flex-1 lg:p-5 ${!desktop && tab !== "edit" ? "hidden" : ""}`}>
           {inspector}
         </div>
 

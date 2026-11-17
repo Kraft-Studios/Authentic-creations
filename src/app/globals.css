@@ -44,6 +44,15 @@
 
 html {
   background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Stop sideways rubber-banding, and sideways touch panning (vertical scroll and pinch-zoom still work). */
+  overscroll-behavior-x: none;
+  touch-action: pan-y pinch-zoom;
+}
+/* The 3D studio is an app screen: it never scrolls or bounces as a page. */
+html:has(.studio-grid) {
+  overscroll-behavior: none;
 }
 
 body {
@@ -56,6 +65,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Nothing may push the page wider than the screen. `clip` (unlike `hidden`) doesn't
+   make a scroll container, so position: sticky keeps working. Phones that ignore
+   overflow on <body> alone would otherwise pan sideways or zoom out, leaving gaps. */
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
 }
 
 ::selection {

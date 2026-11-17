@@ -56,7 +56,7 @@ export default function Contact({ page = false }: { page?: boolean }) {
 
   return (
     <section id="contact" className={`relative grid min-h-svh items-center gap-14 overflow-hidden bg-bg px-5 py-28 md:grid-cols-2 md:px-8 ${page ? "pt-32" : "border-t border-line"}`}>
-      <div>
+      <div className="min-w-0">
         <p className="eyebrow tag text-dim">contact</p>
         <Heading className="mt-8 text-[13vw] leading-[0.86] tracking-[-0.06em] md:text-[6.6vw]">
           Let&apos;s make
@@ -91,8 +91,8 @@ export default function Contact({ page = false }: { page?: boolean }) {
         </dl>
       </div>
 
-      <div ref={stage} className="relative flex justify-center py-6 [perspective:1400px]">
-        <div ref={phone} className="relative w-[300px] [transform-style:preserve-3d] sm:w-[330px]">
+      <div ref={stage} className="relative flex min-w-0 justify-center py-6 [perspective:1400px]">
+        <div ref={phone} className="relative w-[min(300px,100%)] [transform-style:preserve-3d] sm:w-[min(330px,100%)]">
           <div className="relative rounded-[48px] border-[10px] border-[#0c0c0c] bg-[#0c0c0c] shadow-[0_50px_120px_-30px_rgba(0,0,0,0.6),inset_0_0_0_1px_#2a2a2a] outline outline-1 outline-[#3a3a3a]">
             <div className="absolute left-1/2 top-2.5 z-10 h-6 w-24 -translate-x-1/2 rounded-full bg-black" />
             <div className="flex h-[600px] flex-col overflow-hidden rounded-[38px] bg-[#111] text-white">

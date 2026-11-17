@@ -54,6 +54,7 @@ function Scene({ progress }: { progress: RefObject<number> }) {
   useEffect(() => () => Object.values(textures).forEach((t) => t.dispose()), [textures]);
 
   const group = useRef<THREE.Group>(null);
+  const touch = useRef(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches);
   const tall = viewport.aspect < 0.9;
   const slots = tall ? TALL : WIDE;
   const s = tall ? THREE.MathUtils.clamp(viewport.width / 5.4, 0.5, 0.9) : THREE.MathUtils.clamp(viewport.width / 9.8, 0.6, 1.08);
@@ -65,8 +66,11 @@ function Scene({ progress }: { progress: RefObject<number> }) {
     const target = THREE.MathUtils.clamp((p - 0.05) * 1.7, 0, 1);
     uniforms.uReveal.value = THREE.MathUtils.damp(uniforms.uReveal.value, target, 2.4, d);
 
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, state.pointer.x * 0.5, 2.2, d);
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, 0.25 + state.pointer.y * 0.28, 2.2, d);
+    // Mouse parallax only: on touch screens the picture stays put while you scroll.
+    const px = touch.current ? 0 : state.pointer.x;
+    const py = touch.current ? 0 : state.pointer.y;
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, px * 0.5, 2.2, d);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, 0.25 + py * 0.28, 2.2, d);
     camera.lookAt(0, -0.35, 0);
 
     if (group.current) {

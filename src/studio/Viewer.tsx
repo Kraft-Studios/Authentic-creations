@@ -35,7 +35,10 @@ type Three = { gl: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.Camera
 /** Shrinks the product on narrow (portrait) viewports so it never spills off the sides. */
 function Fit({ children }: { children: React.ReactNode }) {
   const aspect = useThree((s) => s.size.width / Math.max(1, s.size.height));
-  const k = Math.min(1, aspect * 0.9 + 0.08);
+  const h = useThree((s) => s.size.height);
+  // Leave room for the title (top) and the toolbar (bottom) when the preview is short.
+  const room = Math.min(1, Math.max(0.5, (h - 124) / (h * 0.82)));
+  const k = Math.min(1, aspect * 0.9 + 0.08, room);
   return <group scale={k}>{children}</group>;
 }
 
