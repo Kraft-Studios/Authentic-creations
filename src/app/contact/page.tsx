@@ -51,7 +51,7 @@ export default function ContactPage() {
         <section className="border-t border-line bg-bg px-5 py-24 md:px-8 md:py-32">
           <Reveal className="grid gap-14 md:grid-cols-[1fr_1.3fr]">
             <div>
-              <p data-reveal className="eyebrow text-dim">( before you message )</p>
+              <p data-reveal className="eyebrow tag text-dim">before you message</p>
               <h2 data-reveal className="mt-8 text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[5vw]">
                 What to
                 <br />
@@ -84,7 +84,7 @@ export default function ContactPage() {
         <section className="border-t border-line bg-bg px-5 py-24 md:px-8 md:py-32">
           <Reveal className="grid gap-12 md:grid-cols-[1fr_1.6fr]">
             <div>
-              <p data-reveal className="eyebrow text-dim">( questions )</p>
+              <p data-reveal className="eyebrow tag text-dim">questions</p>
               <h2 data-reveal className="mt-8 text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[5vw]">
                 Good to
                 <br />

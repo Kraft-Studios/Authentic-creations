@@ -16,7 +16,7 @@ export default function Services() {
     <section id="services" className="relative bg-bg px-5 pb-32 md:px-8">
       <div className="flex items-end justify-between border-b border-line pb-4">
         <h2 className="text-[13vw] leading-[0.85] tracking-[-0.06em] md:text-[7.5vw]">Services</h2>
-        <p className="eyebrow pb-2 text-dim">( 0{SERVICES.length} )</p>
+        <p className="eyebrow tag pb-2 text-dim">0{SERVICES.length}</p>
       </div>
 
       <ul onPointerLeave={() => setOpen(null)}>

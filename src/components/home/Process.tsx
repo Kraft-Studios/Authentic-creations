@@ -47,7 +47,7 @@ export default function Process() {
       </div>
       <div ref={track} className="flex flex-col md:h-svh md:w-max md:flex-row">
         <div className="flex shrink-0 flex-col justify-between px-5 py-20 md:w-[40vw] md:px-8 md:py-24">
-          <p className="eyebrow text-dim">( how it&apos;s made )</p>
+          <p className="eyebrow tag text-dim">how it&apos;s made</p>
           <h2 className="mt-8 text-[13vw] leading-[0.86] tracking-[-0.06em] md:text-[6.2vw]">
             Four steps,
             <br />

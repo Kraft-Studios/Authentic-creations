@@ -91,7 +91,7 @@ export default function ServicesPage() {
           <Reveal>
             <div className="grid gap-8 md:grid-cols-[1fr_1.4fr] md:items-end">
               <div>
-                <p data-reveal className="eyebrow text-dim">( for businesses )</p>
+                <p data-reveal className="eyebrow tag text-dim">for businesses</p>
                 <h2 data-reveal className="mt-8 text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[5.6vw]">
                   How a branded
                   <br />
@@ -121,7 +121,7 @@ export default function ServicesPage() {
         <section className="border-t border-line bg-bg px-5 py-20 md:px-8">
           <Reveal>
             <div className="grid gap-10 md:grid-cols-[1fr_2fr] md:items-center">
-              <p data-reveal className="eyebrow text-dim">( seen on tiktok )</p>
+              <p data-reveal className="eyebrow tag text-dim">seen on tiktok</p>
               <div data-reveal className="grid grid-cols-3 gap-4">
                 {[
                   { n: SITE.stats.topViews, l: "views on one press" },

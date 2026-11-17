@@ -57,7 +57,7 @@ export default function Contact({ page = false }: { page?: boolean }) {
   return (
     <section id="contact" className={`relative grid min-h-svh items-center gap-14 overflow-hidden bg-bg px-5 py-28 md:grid-cols-2 md:px-8 ${page ? "pt-32" : "border-t border-line"}`}>
       <div>
-        <p className="eyebrow text-dim">( contact )</p>
+        <p className="eyebrow tag text-dim">contact</p>
         <Heading className="mt-8 text-[13vw] leading-[0.86] tracking-[-0.06em] md:text-[6.6vw]">
           Let&apos;s make
           <br />

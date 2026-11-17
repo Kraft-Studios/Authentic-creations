@@ -46,7 +46,7 @@ export default function Intro() {
 
   return (
     <section ref={root} id="about" className="relative z-10 bg-bg px-5 py-32 md:px-8 md:py-48">
-      <p className="eyebrow mb-10 text-dim">( about )</p>
+      <p className="eyebrow tag mb-10 text-dim">about</p>
       <p className="max-w-[22ch] text-[clamp(2.2rem,5.2vw,5.6rem)] leading-[1.02] tracking-[-0.045em] md:max-w-[24ch]">
         {PARTS.map((part, i) =>
           typeof part === "string" ? (

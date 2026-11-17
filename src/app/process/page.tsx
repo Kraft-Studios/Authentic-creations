@@ -66,7 +66,7 @@ export default function ProcessPage() {
         {/* Print methods */}
         <section className="border-t border-line bg-fg px-5 py-24 text-bg md:px-8 md:py-32">
           <Reveal>
-            <p data-reveal className="eyebrow opacity-60">( how we print )</p>
+            <p data-reveal className="eyebrow tag opacity-60">how we print</p>
             <h2 data-reveal className="mt-8 max-w-4xl text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[5.6vw]">
               Three methods, one rule: it has to last.
             </h2>
@@ -94,7 +94,7 @@ export default function ProcessPage() {
           <Reveal>
             <div className="grid gap-10 md:grid-cols-[1fr_1fr] md:items-end">
               <div>
-                <p data-reveal className="eyebrow text-dim">( artwork guide )</p>
+                <p data-reveal className="eyebrow tag text-dim">artwork guide</p>
                 <h2 data-reveal className="mt-8 text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[5.6vw]">
                   Getting the
                   <br />
@@ -121,7 +121,7 @@ export default function ProcessPage() {
         <section className="border-t border-line bg-bg px-5 py-24 md:px-8 md:py-32">
           <Reveal className="grid gap-12 md:grid-cols-[1fr_1.5fr]">
             <div>
-              <p data-reveal className="eyebrow text-dim">( care )</p>
+              <p data-reveal className="eyebrow tag text-dim">care</p>
               <h2 data-reveal className="mt-8 text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[5vw]">
                 Keep it
                 <br />

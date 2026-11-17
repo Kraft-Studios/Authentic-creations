@@ -53,7 +53,7 @@ export default function PageHero({
   return (
     <header ref={root} className="relative bg-bg px-5 pb-16 pt-32 md:px-8 md:pt-40">
       <div className="ph-fade flex items-baseline justify-between border-b border-line pb-4">
-        <p className="eyebrow text-dim">( {label} )</p>
+        <p className="eyebrow tag text-dim">{label}</p>
         {index && <p className="eyebrow text-dim">{index}</p>}
       </div>
       <h1 className="mt-10 text-[15vw] leading-[0.86] tracking-[-0.065em] md:text-[9.5vw]">

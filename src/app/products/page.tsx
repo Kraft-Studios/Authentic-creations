@@ -148,7 +148,7 @@ export default function ProductsPage() {
         <section className="relative overflow-hidden bg-fg px-5 py-24 text-bg md:px-8 md:py-32">
           <div className="grid gap-12 md:grid-cols-[1.2fr_1fr] md:items-end">
             <div>
-              <p className="eyebrow opacity-60">( bulk &amp; corporate )</p>
+              <p className="eyebrow tag opacity-60">bulk &amp; corporate</p>
               <h2 className="mt-8 text-[12vw] leading-[0.88] tracking-[-0.06em] md:text-[6vw]">
                 Ordering for
                 <br />a whole team?

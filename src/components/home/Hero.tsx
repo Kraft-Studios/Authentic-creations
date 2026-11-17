@@ -62,8 +62,8 @@ export default function Hero() {
 
         <div className="pointer-events-none absolute inset-x-0 top-20 flex justify-between px-5 md:px-8">
           <div className="eyebrow text-dim">
-            <p className="hero-step-1">( 01 ) blank</p>
-            <p className="hero-step-2 -mt-[1.45em] text-fg opacity-0">( 02 ) pressed</p>
+            <p className="hero-step-1"><span className="tag">01</span> blank</p>
+            <p className="hero-step-2 -mt-[1.45em] text-fg opacity-0"><span className="tag">02</span> pressed</p>
           </div>
         </div>
 

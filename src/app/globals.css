@@ -90,6 +90,13 @@ textarea {
   letter-spacing: 0.08em;
 }
 
+/* Section labels have no brackets: the text itself is underlined. */
+.tag {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
 /* Photography is black & white until you hover it */
 .bw {
   filter: grayscale(1) contrast(1.06);

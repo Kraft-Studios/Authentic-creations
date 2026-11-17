@@ -47,7 +47,7 @@ export default function Products() {
       <span id="prices" className="absolute -top-16" aria-hidden />
       <div className="mb-14 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="eyebrow mb-6 text-dim">( products &amp; prices )</p>
+          <p className="eyebrow tag mb-6 text-dim">products &amp; prices</p>
           <h2 className="text-[13vw] leading-[0.85] tracking-[-0.06em] md:text-[7.5vw]">Pick a blank.</h2>
         </div>
         <p className="max-w-sm text-lg leading-snug text-fg/70">
