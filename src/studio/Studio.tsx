@@ -8,7 +8,7 @@ import { SITE, waLink } from "@/lib/site";
 import { interTight } from "@/app/fonts";
 import { DesignEditor, STICKERS, type Selection, type StickerKind, type TemplateId } from "./editor";
 import Viewer, { type ViewerHandle } from "./Viewer";
-import { FONTS, FONT_SET, loadStudioFonts, studioFontsLoaded } from "./fonts";
+import { FONTS, FONT_SET, loadStudioFonts } from "./fonts";
 import { Icon, type IconName } from "./icons";
 
 const SWATCHES = ["#111111", "#ffffff", "#ff3d8b", "#1fc8ff", "#ffd60a", "#ff5a1f", "#22c55e", "#7c3aed", "#1e3a8a", "#f5e6d3"];
@@ -259,44 +259,42 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
     toastTimer.current = window.setTimeout(() => setToast(null), 3200);
   };
 
-  /* Create the 2D editor once. */
+  /* Create the 2D editor once. It starts straight away (nothing to wait for), then the
+     text is re-measured as soon as the design fonts have finished loading. */
   useEffect(() => {
+    const host = hostRef.current;
+    const frame = frameRef.current;
+    if (!host || !frame) return;
     let cancelled = false;
-    let ed: DesignEditor | null = null;
-    (async () => {
-      await loadStudioFonts();
-      if (cancelled || !hostRef.current || !frameRef.current) return;
-      ed = new DesignEditor(
-        hostRef.current,
-        frameRef.current,
-        product,
-        {
-          onRender: () => {
-            if (texRef.current) texRef.current.needsUpdate = true;
-          },
-          onSelection: (s, byUser) => {
-            setSelection(s);
-            // On phones, tapping something on the print area opens its settings.
-            if (s && byUser && !desktopRef.current) setTab("edit");
-          },
-          onHistory: (undo, redo) => setHist({ undo, redo }),
-          onFit: (w, h) => setCssSize({ w, h }),
-          onResize: () => setTexVersion((v) => v + 1),
-          onObjects: (objects, images) => setCounts({ objects, images }),
+    const ed = new DesignEditor(
+      host,
+      frame,
+      product,
+      {
+        onRender: () => {
+          if (texRef.current) texRef.current.needsUpdate = true;
         },
-        FONT_SET,
-      );
-      editorRef.current = ed;
-      ed.starter();
-      setReady(true);
-      // If the fonts were still downloading when the studio opened, fix the text once they arrive.
-      void studioFontsLoaded().then(() => {
-        if (!cancelled) ed?.refreshText();
-      });
-    })();
+        onSelection: (s, byUser) => {
+          setSelection(s);
+          // On phones, tapping something on the print area opens its settings.
+          if (s && byUser && !desktopRef.current) setTab("edit");
+        },
+        onHistory: (undo, redo) => setHist({ undo, redo }),
+        onFit: (w, h) => setCssSize({ w, h }),
+        onResize: () => setTexVersion((v) => v + 1),
+        onObjects: (objects, images) => setCounts({ objects, images }),
+      },
+      FONT_SET,
+    );
+    editorRef.current = ed;
+    ed.starter();
+    setReady(true);
+    void loadStudioFonts().then(() => {
+      if (!cancelled) ed.refreshText();
+    });
     return () => {
       cancelled = true;
-      ed?.dispose();
+      ed.dispose();
       editorRef.current = null;
       setReady(false);
     };
