@@ -19,6 +19,13 @@ export const majorMono = Major_Mono_Display({
   display: "swap",
 });
 
-/* Product-artwork fonts (used inside 3D prints and the studio, not the site UI). */
+/* Product-artwork fonts (used inside 3D prints and the studio). */
 export const anton = Anton({ subsets: ["latin"], weight: "400", display: "swap", preload: false });
-export const interTight = Inter_Tight({ subsets: ["latin"], weight: ["400", "700"], display: "swap", preload: false });
+/** Also the 3D studio's interface font (labels, buttons, inputs), via the `font-ui` class. */
+export const interTight = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+  preload: false,
+});

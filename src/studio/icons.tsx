@@ -31,6 +31,8 @@ const PATHS = {
   close: "M6 6l12 12M18 6L6 18",
   cube: "M21 8l-9-5-9 5v8l9 5 9-5V8zM3 8l9 5 9-5M12 13v8",
   frame: "M4 4h16v16H4zM4 4l16 16",
+  chevron: "M9 6l6 6-6 6",
+  cursor: "M5 3l14 7.5-6.2 1.7L11 19z",
 } as const;
 
 export type IconName = keyof typeof PATHS;

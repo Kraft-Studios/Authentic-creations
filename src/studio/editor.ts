@@ -60,6 +60,8 @@ export class DesignEditor {
   private lastEdited: string | null = null;
   private ro: ResizeObserver;
   private blobUrls: string[] = [];
+  /** The "YOUR DESIGN" starter text; it goes away when the customer adds something. */
+  private placeholder: FabricObject | null = null;
   private disposed = false;
 
   constructor(host: HTMLElement, frame: HTMLElement, product: Product, ev: EditorEvents, fonts: FontSet) {
@@ -228,6 +230,8 @@ export class DesignEditor {
 
   /* -------------------------- adding things ------------------------ */
   private place(o: FabricObject, at?: { x: number; y: number }) {
+    if (this.placeholder && this.canvas.getObjects().includes(this.placeholder)) this.canvas.remove(this.placeholder);
+    this.placeholder = null;
     const { w, h } = this.size;
     o.set({ originX: "center", originY: "center", left: at?.x ?? w / 2, top: at?.y ?? h / 2 });
     this.canvas.add(o);
@@ -480,9 +484,8 @@ export class DesignEditor {
     const { w, h } = this.size;
     const m = Math.min(w, h);
     this.restoring = true;
-    this.addText("YOUR\nDESIGN", { fontFamily: this.fonts.display, fill: "#111111", size: m * 0.3, x: w / 2, y: h * 0.44 });
-    this.addSticker("sparkle", ACCENT, { size: m * 0.14, x: w / 2 + m * 0.42, y: h * 0.22 });
-    this.addText("add photos, text & stickers", { fontFamily: this.fonts.body, fill: "#777777", size: m * 0.055, x: w / 2, y: h * 0.84, bold: true });
+    // A quiet placeholder: the customer's own photos and text replace it.
+    this.placeholder = this.addText("YOUR\nDESIGN", { fontFamily: this.fonts.display, fill: "#111111", size: m * 0.27, x: w / 2, y: h * 0.5 });
     this.canvas.discardActiveObject();
     this.restoring = false;
     this.history = [];
@@ -510,6 +513,10 @@ export class DesignEditor {
     this.restoring = true;
     this.canvas.setDimensions({ width: next.canvas.w, height: next.canvas.h }, { backstoreOnly: true });
     await this.canvas.loadFromJSON(source.json);
+    // Loading makes new objects: find the starter text again if it's still untouched.
+    if (this.placeholder) {
+      this.placeholder = this.canvas.getObjects().find((o) => o instanceof Textbox && o.text === "YOUR\nDESIGN") ?? null;
+    }
 
     if (!own) {
       // Scale the copied design to the new print area.

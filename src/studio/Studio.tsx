@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { PRODUCTS, formatPrice, getProduct, type Product } from "@/lib/products";
 import { SITE, waLink } from "@/lib/site";
+import { interTight } from "@/app/fonts";
 import { DesignEditor, STICKERS, type Selection, type StickerKind, type TemplateId } from "./editor";
 import Viewer, { type ViewerHandle } from "./Viewer";
 import { FONTS, FONT_SET, loadStudioFonts } from "./fonts";
@@ -12,11 +13,19 @@ import { Icon, type IconName } from "./icons";
 
 const SWATCHES = ["#111111", "#ffffff", "#ff3d8b", "#1fc8ff", "#ffd60a", "#ff5a1f", "#22c55e", "#7c3aed", "#1e3a8a", "#f5e6d3"];
 const TEMPLATES: { id: TemplateId; label: string; hint: string }[] = [
-  { id: "mom", label: "Best Mom", hint: "Hearts and a message" },
-  { id: "name", label: "Name", hint: "One big name" },
-  { id: "company", label: "Company", hint: "Logo-style text" },
+  { id: "mom", label: "Best Mom", hint: "Hearts and a short message" },
+  { id: "name", label: "Name", hint: "One name, set large" },
+  { id: "company", label: "Company", hint: "Your business name, logo style" },
   { id: "birthday", label: "Birthday", hint: "Stars and a date" },
 ];
+const SHAPE_NAMES: Record<StickerKind, string> = {
+  heart: "Heart",
+  star: "Star",
+  sparkle: "Sparkle",
+  crown: "Crown",
+  bolt: "Lightning bolt",
+  circle: "Circle",
+};
 
 type Tab = "product" | "add" | "templates" | "edit";
 const TABS: { id: Tab; label: string; icon: IconName; mobileOnly?: boolean }[] = [
@@ -40,11 +49,34 @@ function useDesktop() {
   );
 }
 
-function Label({ children, right }: { children: ReactNode; right?: ReactNode }) {
+const BTN_PRIMARY =
+  "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-fg px-4 text-[14px] font-medium text-bg transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40";
+const BTN_SECONDARY =
+  "flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-line bg-raise px-4 text-[14px] font-medium transition-colors hover:border-fg/30 disabled:cursor-not-allowed disabled:opacity-40";
+
+/** A titled block in a tool panel. Blocks after the first get a hairline above them. */
+function Section({ title, aside, hint, children }: { title: string; aside?: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-2">
-      <p className="eyebrow text-dim">{children}</p>
-      {right}
+    <section className="border-t border-line pt-5 first:border-t-0 first:pt-0">
+      <div className="mb-3 flex min-h-6 items-center justify-between gap-3">
+        <h3 className="text-[13px] font-medium">{title}</h3>
+        {aside}
+      </div>
+      {children}
+      {hint && <p className="mt-2.5 text-[12px] leading-snug text-dim">{hint}</p>}
+    </section>
+  );
+}
+
+/** A labelled control with an optional value read-out on the right. */
+function Field({ label, value, children }: { label: string; value?: ReactNode; children: ReactNode }) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between text-[12px] text-dim">
+        <span>{label}</span>
+        {value != null && <span className="tabular-nums text-fg/70">{value}</span>}
+      </div>
+      {children}
     </div>
   );
 }
@@ -72,17 +104,57 @@ function IconBtn({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
-        active ? "border-fg bg-fg text-bg" : danger ? "border-line hover:border-red-500 hover:text-red-500" : "border-line hover:border-fg/60"
+      className={`grid h-8 w-8 shrink-0 place-items-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+        active ? "bg-fg text-bg" : danger ? "text-fg/70 hover:bg-red-500/10 hover:text-red-500" : "text-fg/70 hover:bg-panel hover:text-fg"
       }`}
     >
-      <Icon name={icon} />
+      <Icon name={icon} className="h-[17px] w-[17px]" />
     </button>
   );
 }
 
+/** Segmented control (tabs, view switches). */
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+  small,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { value: T; label: string; icon?: IconName; dot?: boolean }[];
+  label: string;
+  small?: boolean;
+}) {
+  return (
+    <div role="tablist" aria-label={label} className="flex rounded-lg bg-panel p-[3px]">
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            onClick={() => onChange(o.value)}
+            className={`relative flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors ${
+              small ? "px-2.5 py-1 text-[12px]" : "px-2 py-1.5 text-[13px]"
+            } ${on ? "bg-raise text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)]" : "text-dim hover:text-fg"}`}
+          >
+            {o.icon && <Icon name={o.icon} className="h-[15px] w-[15px]" />}
+            {o.label}
+            {o.dot && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-fg" aria-hidden />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function Swatches({ value, onPick, allowNone }: { value?: string; onPick: (c: string) => void; allowNone?: boolean }) {
-  const ring = (on: boolean) => (on ? "ring-2 ring-fg ring-offset-2 ring-offset-bg" : "");
+  const ring = (on: boolean) => (on ? "ring-2 ring-fg ring-offset-2 ring-offset-bg" : "hover:scale-110");
+  const custom = !!value && value.length === 7 && !SWATCHES.includes(value.toLowerCase());
   return (
     <div className="flex flex-wrap items-center gap-2">
       {allowNone && (
@@ -91,7 +163,7 @@ function Swatches({ value, onPick, allowNone }: { value?: string; onPick: (c: st
           title="No background"
           aria-label="No background"
           onClick={() => onPick("")}
-          className={`checker h-7 w-7 rounded-full border border-line ${ring(value === "")}`}
+          className={`checker h-6 w-6 rounded-full border border-line transition-transform ${ring(value === "")}`}
         />
       )}
       {SWATCHES.map((c) => (
@@ -102,17 +174,19 @@ function Swatches({ value, onPick, allowNone }: { value?: string; onPick: (c: st
           aria-label={`Colour ${c}`}
           onClick={() => onPick(c)}
           style={{ background: c }}
-          className={`h-7 w-7 rounded-full border border-line ${ring(value?.toLowerCase() === c)}`}
+          className={`h-6 w-6 rounded-full border border-line transition-transform ${ring(value?.toLowerCase() === c)}`}
         />
       ))}
       <label
-        className="relative h-7 w-7 cursor-pointer overflow-hidden rounded-full border border-line bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]"
-        title="Pick any colour"
+        className={`relative grid h-6 w-6 cursor-pointer place-items-center overflow-hidden rounded-full border border-line bg-raise text-fg/70 transition-transform ${ring(custom)}`}
+        style={custom ? { background: value } : undefined}
+        title="Any colour"
       >
         <span className="sr-only">Pick any colour</span>
+        {!custom && <Icon name="add" className="h-3.5 w-3.5" />}
         <input
           type="color"
-          value={value && value.startsWith("#") && value.length === 7 ? value : "#ff3d8b"}
+          value={value && value.startsWith("#") && value.length === 7 ? value : "#111111"}
           onChange={(e) => onPick(e.target.value)}
           className="absolute inset-0 cursor-pointer opacity-0"
         />
@@ -121,12 +195,18 @@ function Swatches({ value, onPick, allowNone }: { value?: string; onPick: (c: st
   );
 }
 
-function Slider({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+function Slider({ min, max, value, ...props }: { min: number; max: number; value: number } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const p = ((value - min) / (max - min || 1)) * 100;
   return (
-    <label className="block">
-      <span className="eyebrow text-dim">{label}</span>
-      <input type="range" {...props} className="mt-2 w-full" />
-    </label>
+    <input
+      type="range"
+      min={min}
+      max={max}
+      value={value}
+      {...props}
+      className="studio-range"
+      style={{ "--p": `${Math.min(100, Math.max(0, p))}%` } as React.CSSProperties}
+    />
   );
 }
 
@@ -342,9 +422,8 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
 
   /* ------------------------------ panels ------------------------------ */
   const productPanel = (
-    <div className="space-y-7">
-      <div>
-        <Label>choose a product</Label>
+    <div className="space-y-5">
+      <Section title="Product">
         <div className="grid grid-cols-2 gap-2">
           {PRODUCTS.map((p) => {
             const on = p.id === product.id;
@@ -354,25 +433,24 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
                 type="button"
                 aria-pressed={on}
                 onClick={() => void chooseProduct(p)}
-                className={`group overflow-hidden rounded-lg border text-left transition-colors ${on ? "border-fg" : "border-line hover:border-fg/40"}`}
+                className={`group overflow-hidden rounded-lg border bg-raise text-left transition-colors ${
+                  on ? "border-fg" : "border-line hover:border-fg/30"
+                }`}
               >
                 <span className="relative block aspect-[4/3] bg-panel">
                   <Image src={p.image} alt="" fill sizes="140px" className={`object-cover ${on ? "" : "bw"}`} />
                 </span>
-                <span className="flex items-baseline justify-between gap-2 px-2.5 py-2">
-                  <span className="truncate text-[13px] leading-tight">{p.name}</span>
-                  <span className={`shrink-0 text-[12px] tabular-nums ${p.price != null ? "" : "text-dim"}`}>{formatPrice(p.price)}</span>
+                <span className="block px-2.5 pb-2.5 pt-2">
+                  <span className="block truncate text-[13px] font-medium leading-tight">{p.name}</span>
+                  <span className="mt-0.5 block text-[12px] tabular-nums text-dim">{formatPrice(p.price)}</span>
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
+      </Section>
       {product.colors && (
-        <div>
-          <Label>
-            {product.colorLabel}: <span className="text-fg">{optionName}</span>
-          </Label>
+        <Section title={product.colorLabel ?? "Colour"} aside={<span className="text-[12px] text-dim">{optionName}</span>}>
           <div className="flex flex-wrap gap-2">
             {product.colors.map((c) => (
               <button
@@ -382,48 +460,45 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
                 aria-label={c.name}
                 onClick={() => setColors((s) => ({ ...s, [product.id]: c.value }))}
                 style={{ background: c.value }}
-                className={`h-8 w-8 rounded-full border border-line ${color === c.value ? "ring-2 ring-fg ring-offset-2 ring-offset-bg" : ""}`}
+                className={`h-7 w-7 rounded-full border border-line transition-transform ${
+                  color === c.value ? "ring-2 ring-fg ring-offset-2 ring-offset-bg" : "hover:scale-110"
+                }`}
               />
             ))}
           </div>
-        </div>
+        </Section>
       )}
     </div>
   );
 
   const addPanel = (
-    <div className="space-y-7">
-      <div>
-        <Label>photos</Label>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={!ready || busy}
-          className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-fg/30 px-4 py-6 text-center transition-colors hover:border-fg disabled:opacity-50"
-        >
-          <Icon name="upload" className="h-6 w-6" />
-          <span className="text-[15px]">{busy ? "Adding…" : "Upload photos"}</span>
-          <span className="text-[12px] text-dim">JPG or PNG. You can also paste or drop them on the print area.</span>
-        </button>
-        <button
-          type="button"
-          disabled={!ready || counts.images < 2}
-          onClick={() => {
-            if (ed()?.collage()) {
-              flash("Photos arranged into a collage");
-              showPrint();
-            }
-          }}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-line px-4 py-2.5 text-[14px] transition-colors hover:border-fg/60 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <Icon name="collage" />
-          Make a collage
-          {counts.images > 0 && <span className="text-dim">({counts.images})</span>}
-        </button>
-      </div>
+    <div className="space-y-5">
+      <Section title="Photos" hint="JPG or PNG. You can also drag photos onto the print area, or paste them.">
+        <div className="space-y-2">
+          <button type="button" onClick={() => fileRef.current?.click()} disabled={!ready || busy} className={BTN_PRIMARY}>
+            <Icon name="upload" className="h-4 w-4" />
+            {busy ? "Adding…" : "Upload photos"}
+          </button>
+          <button
+            type="button"
+            disabled={!ready || counts.images < 2}
+            title={counts.images < 2 ? "Add two or more photos first" : undefined}
+            onClick={() => {
+              if (ed()?.collage()) {
+                flash("Photos arranged into a collage");
+                showPrint();
+              }
+            }}
+            className={BTN_SECONDARY}
+          >
+            <Icon name="collage" className="h-4 w-4" />
+            Make a collage
+            {counts.images > 1 && <span className="font-normal text-dim">{counts.images} photos</span>}
+          </button>
+        </div>
+      </Section>
 
-      <div>
-        <Label>text</Label>
+      <Section title="Text">
         <button
           type="button"
           onClick={() => {
@@ -431,39 +506,37 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
             afterAdd();
           }}
           disabled={!ready}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-fg px-4 py-3 text-[15px] text-bg transition-transform hover:scale-[1.01] disabled:opacity-50"
+          className={BTN_SECONDARY}
         >
-          <Icon name="text" />
-          Add text
+          <Icon name="text" className="h-4 w-4" />
+          Add a text box
         </button>
-      </div>
+      </Section>
 
-      <div>
-        <Label>shapes</Label>
-        <div className="grid grid-cols-6 gap-2">
+      <Section title="Shapes">
+        <div className="grid grid-cols-6 gap-1.5">
           {(Object.keys(STICKERS) as StickerKind[]).map((k) => (
             <button
               key={k}
               type="button"
-              title={`Add ${k}`}
-              aria-label={`Add ${k}`}
+              title={SHAPE_NAMES[k]}
+              aria-label={`Add ${SHAPE_NAMES[k].toLowerCase()}`}
               disabled={!ready}
               onClick={() => {
                 ed()?.addSticker(k);
                 afterAdd();
               }}
-              className="grid aspect-square place-items-center rounded-lg border border-line transition-colors hover:border-fg/60"
+              className="grid aspect-square place-items-center rounded-lg bg-panel text-fg/75 transition-colors hover:bg-fg hover:text-bg"
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="currentColor" aria-hidden>
                 <path d={STICKERS[k]} />
               </svg>
             </button>
           ))}
         </div>
-      </div>
+      </Section>
 
-      <div>
-        <Label>background</Label>
+      <Section title="Background">
         <Swatches
           value={bg}
           allowNone={transparent}
@@ -472,14 +545,13 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
             ed()?.setBackground(c);
           }}
         />
-      </div>
+      </Section>
     </div>
   );
 
   const templatesPanel = (
-    <div>
-      <Label>start from a template</Label>
-      <div className="grid grid-cols-2 gap-2">
+    <Section title="Templates" hint="A template replaces your text and shapes. Your photos stay.">
+      <div className="space-y-2">
         {TEMPLATES.map((t) => (
           <button
             key={t.id}
@@ -489,39 +561,44 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
               ed()?.applyTemplate(t.id);
               showPrint();
             }}
-            className="rounded-lg border border-line px-3 py-4 text-left transition-colors hover:border-fg/60"
+            className="group flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-raise px-3.5 py-3 text-left transition-colors hover:border-fg/30"
           >
-            <span className="block text-[15px]">{t.label}</span>
-            <span className="mt-1 block text-[12px] text-dim">{t.hint}</span>
+            <span>
+              <span className="block text-[14px] font-medium">{t.label}</span>
+              <span className="mt-0.5 block text-[12px] text-dim">{t.hint}</span>
+            </span>
+            <Icon name="chevron" className="h-4 w-4 text-dim transition-transform group-hover:translate-x-0.5" />
           </button>
         ))}
       </div>
-      <p className="mt-4 text-[12px] leading-snug text-dim">Templates replace your text and shapes. Your photos stay.</p>
-    </div>
+    </Section>
   );
 
-  const inspector = (
-    <div>
-      {!sel ? (
-        <div className="rounded-lg border border-dashed border-line px-4 py-6 text-center">
-          <p className="text-[14px]">Nothing selected</p>
-          <p className="mt-1 text-[12px] leading-snug text-dim">
-            Tap a photo, text or shape on the print area to edit it. Move it with your finger or mouse, and use the corners to resize.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-5">
-          <Label
-            right={
-              <div className="flex gap-1.5">
-                <IconBtn icon="copy" label="Duplicate (Ctrl+D)" onClick={() => void ed()?.duplicate()} />
-                <IconBtn icon="trash" label="Delete" danger onClick={() => ed()?.remove()} />
-              </div>
-            }
-          >
-            {sel.kind === "multi" ? `${sel.count} items` : sel.kind === "image" ? "photo" : sel.kind}
-          </Label>
+  const selTitle = !sel ? "" : sel.kind === "multi" ? `${sel.count} items` : sel.kind === "image" ? "Photo" : sel.kind === "text" ? "Text" : "Shape";
+  const fontMax = Math.round(Math.min(product.canvas.w, product.canvas.h) * 0.6);
 
+  const inspector = !sel ? (
+    <div className="flex h-full min-h-40 flex-col items-center justify-center px-6 py-8 text-center">
+      <span className="grid h-10 w-10 place-items-center rounded-full bg-panel text-dim">
+        <Icon name="cursor" className="h-[18px] w-[18px]" />
+      </span>
+      <p className="mt-3 text-[13px] font-medium">Nothing selected</p>
+      <p className="mt-1 max-w-[17rem] text-[12px] leading-snug text-dim">
+        Click a photo, text or shape on the print area to edit it. Drag to move it and use the corners to resize.
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-5">
+      <Section
+        title={selTitle}
+        aside={
+          <div className="-mr-1.5 flex">
+            <IconBtn icon="copy" label="Duplicate (Ctrl+D)" onClick={() => void ed()?.duplicate()} />
+            <IconBtn icon="trash" label="Delete" danger onClick={() => ed()?.remove()} />
+          </div>
+        }
+      >
+        <div className="space-y-4">
           {sel.kind === "text" && (
             <>
               <textarea
@@ -529,114 +606,134 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
                 onChange={(e) => ed()?.updateActive({ text: e.target.value })}
                 rows={2}
                 aria-label="Text"
-                className="w-full resize-none rounded-lg border border-line bg-panel px-3 py-2 text-[15px] outline-none focus:border-fg"
+                className="w-full resize-none rounded-lg border border-line bg-raise px-3 py-2 text-[14px] outline-none transition-colors focus:border-fg/40"
               />
               <div className="flex gap-2">
                 <select
                   value={FONTS.find((f) => f.family === sel.fontFamily)?.family ?? sel.fontFamily}
                   onChange={(e) => ed()?.updateActive({ fontFamily: e.target.value })}
                   aria-label="Font"
-                  className="min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 py-2 text-[14px] outline-none focus:border-fg"
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-raise px-2.5 text-[13px] outline-none transition-colors focus:border-fg/40"
                 >
                   {FONTS.map((f) => (
-                    <option key={f.id} value={f.family} style={{ fontFamily: f.family }}>
+                    <option key={f.id} value={f.family}>
                       {f.label}
                     </option>
                   ))}
                 </select>
+                <div className="flex rounded-lg bg-panel p-[3px]">
+                  {(["left", "center", "right"] as const).map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      title={`Align ${a}`}
+                      aria-label={`Align ${a}`}
+                      aria-pressed={sel.textAlign === a}
+                      onClick={() => ed()?.updateActive({ textAlign: a })}
+                      className={`grid h-[30px] w-[30px] place-items-center rounded-md transition-colors ${
+                        sel.textAlign === a ? "bg-raise text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)]" : "text-dim hover:text-fg"
+                      }`}
+                    >
+                      <Icon name={a === "left" ? "alignLeft" : a === "center" ? "alignCenter" : "alignRight"} className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
                 <button
                   type="button"
                   aria-pressed={sel.bold}
                   title="Bold"
+                  aria-label="Bold"
                   onClick={() => ed()?.updateActive({ fontWeight: sel.bold ? "normal" : "bold" })}
-                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border text-[15px] font-bold ${
-                    sel.bold ? "border-fg bg-fg text-bg" : "border-line"
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[14px] font-bold transition-colors ${
+                    sel.bold ? "bg-fg text-bg" : "border border-line bg-raise hover:border-fg/30"
                   }`}
                 >
                   B
                 </button>
               </div>
-              <div className="flex gap-1.5">
-                {(["left", "center", "right"] as const).map((a) => (
-                  <IconBtn
-                    key={a}
-                    icon={a === "left" ? "alignLeft" : a === "center" ? "alignCenter" : "alignRight"}
-                    label={`Align ${a}`}
-                    active={sel.textAlign === a}
-                    onClick={() => ed()?.updateActive({ textAlign: a })}
-                  />
-                ))}
-              </div>
-              <Slider
-                label="size"
-                min={16}
-                max={Math.round(Math.min(product.canvas.w, product.canvas.h) * 0.6)}
-                value={sel.fontSize}
-                onChange={(e) => ed()?.updateActive({ fontSize: Number(e.target.value), scaleX: 1, scaleY: 1 })}
-              />
-              <div>
-                <p className="eyebrow mb-2 text-dim">colour</p>
+              <Field label="Size" value={Math.round(sel.fontSize)}>
+                <Slider
+                  aria-label="Text size"
+                  min={16}
+                  max={fontMax}
+                  value={Math.min(sel.fontSize, fontMax)}
+                  onChange={(e) => ed()?.updateActive({ fontSize: Number(e.target.value), scaleX: 1, scaleY: 1 })}
+                />
+              </Field>
+              <Field label="Colour">
                 <Swatches value={sel.fill} onPick={(c) => ed()?.updateActive({ fill: c })} />
-              </div>
+              </Field>
             </>
           )}
 
           {sel.kind === "shape" && (
-            <div>
-              <p className="eyebrow mb-2 text-dim">colour</p>
+            <Field label="Colour">
               <Swatches value={sel.fill} onPick={(c) => ed()?.updateActive({ fill: c })} />
-            </div>
+            </Field>
           )}
 
           {sel.kind === "image" && (
             <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => ed()?.fillArea("cover")}
-                className="flex items-center justify-center gap-2 rounded-lg border border-line py-2.5 text-[14px] hover:border-fg/60"
-              >
-                <Icon name="fill" /> Fill area
+              <button type="button" onClick={() => ed()?.fillArea("cover")} className={`${BTN_SECONDARY} h-9 text-[13px]`}>
+                <Icon name="fill" className="h-4 w-4" /> Fill area
               </button>
-              <button
-                type="button"
-                onClick={() => ed()?.fillArea("contain")}
-                className="flex items-center justify-center gap-2 rounded-lg border border-line py-2.5 text-[14px] hover:border-fg/60"
-              >
-                <Icon name="fit" /> Fit inside
+              <button type="button" onClick={() => ed()?.fillArea("contain")} className={`${BTN_SECONDARY} h-9 text-[13px]`}>
+                <Icon name="fit" className="h-4 w-4" /> Fit inside
               </button>
             </div>
           )}
 
           {sel.kind !== "multi" && (
-            <Slider
-              label="opacity"
-              min={0.1}
-              max={1}
-              step={0.05}
-              value={sel.opacity}
-              onChange={(e) => ed()?.updateActive({ opacity: Number(e.target.value) })}
-            />
+            <Field label="Opacity" value={`${Math.round(sel.opacity * 100)}%`}>
+              <Slider
+                aria-label="Opacity"
+                min={0.1}
+                max={1}
+                step={0.05}
+                value={sel.opacity}
+                onChange={(e) => ed()?.updateActive({ opacity: Number(e.target.value) })}
+              />
+            </Field>
           )}
-
-          <div>
-            <p className="eyebrow mb-2 text-dim">arrange</p>
-            <div className="flex flex-wrap gap-1.5">
-              <IconBtn icon="center" label="Centre" onClick={() => ed()?.center()} />
-              <IconBtn icon="flip" label="Mirror" onClick={() => ed()?.flip()} />
-              <IconBtn icon="forward" label="Bring forward" onClick={() => ed()?.forward()} />
-              <IconBtn icon="backward" label="Send backward" onClick={() => ed()?.backward()} />
-            </div>
-          </div>
         </div>
-      )}
+      </Section>
+
+      <Section title="Arrange">
+        <div className="flex gap-1 rounded-lg bg-panel p-[3px]">
+          {(
+            [
+              ["center", "Centre", () => ed()?.center()],
+              ["flip", "Mirror", () => ed()?.flip()],
+              ["forward", "Bring forward", () => ed()?.forward()],
+              ["backward", "Send backward", () => ed()?.backward()],
+            ] as const
+          ).map(([icon, label, run]) => (
+            <button
+              key={icon}
+              type="button"
+              title={label}
+              aria-label={label}
+              onClick={run}
+              className="grid h-8 flex-1 place-items-center rounded-md text-fg/70 transition-colors hover:bg-raise hover:text-fg"
+            >
+              <Icon name={icon} className="h-[17px] w-[17px]" />
+            </button>
+          ))}
+        </div>
+      </Section>
     </div>
   );
 
-  const tabs = TABS.filter((t) => !t.mobileOnly || !desktop);
+  const tabs = TABS.filter((t) => !t.mobileOnly || !desktop).map((t) => ({
+    value: t.id,
+    label: t.label,
+    icon: t.icon,
+    dot: t.id === "edit" && !!sel && tab !== "edit",
+  }));
 
   /* ------------------------------- layout ------------------------------- */
   return (
-    <div className="studio-grid h-[100dvh] overflow-hidden bg-bg pt-16">
+    <div className={`${interTight.variable} studio-grid h-[100dvh] overflow-hidden bg-bg pt-16 font-ui`}>
       <h1 className="sr-only">{SITE.name} 3D design studio</h1>
 
       {/* 3D preview */}
@@ -651,106 +748,56 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
           active={desktop || view === "3d"}
         />
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4 lg:p-5">
-          <div>
-            <p className="text-[clamp(1.1rem,2vw,1.6rem)] leading-tight tracking-[-0.03em]">{product.name}</p>
-            <p className="text-[14px] tabular-nums text-dim">{formatPrice(product.price)}</p>
-          </div>
+        <div className="pointer-events-none absolute left-0 top-0 p-4 lg:p-6">
+          <p className="font-sans text-[clamp(1.15rem,1.8vw,1.6rem)] leading-tight tracking-[-0.02em]">{product.name}</p>
+          <p className="mt-0.5 text-[13px] tabular-nums text-dim">
+            {product.price != null ? `${formatPrice(product.price)} each` : "Priced on request"}
+          </p>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 flex justify-center p-3 lg:p-5">
-          <div className="flex items-center gap-1 rounded-full border border-line bg-bg/85 p-1 backdrop-blur">
-            {[
-              { v: false, l: "Blank" },
-              { v: true, l: "Printed" },
-            ].map((o) => (
-              <button
-                key={o.l}
-                type="button"
-                aria-pressed={printed === o.v}
-                onClick={() => (o.v && printed ? viewerRef.current?.press() : setPrinted(o.v))}
-                className={`rounded-full px-3.5 py-1.5 text-[13px] transition-colors ${printed === o.v ? "bg-fg text-bg" : "text-fg/70 hover:text-fg"}`}
-              >
-                {o.l}
-              </button>
-            ))}
-            <span className="mx-1 h-5 w-px bg-line" aria-hidden />
-            <button
-              type="button"
-              title="Auto-rotate"
-              aria-label="Auto-rotate"
-              aria-pressed={autoRotate}
-              onClick={() => setAutoRotate((v) => !v)}
-              className={`grid h-8 w-8 place-items-center rounded-full transition-colors ${autoRotate ? "bg-fg text-bg" : "hover:bg-fg/10"}`}
-            >
-              <Icon name="rotate" className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Reset view"
-              aria-label="Reset view"
-              onClick={() => viewerRef.current?.resetView()}
-              className="grid h-8 w-8 place-items-center rounded-full hover:bg-fg/10"
-            >
-              <Icon name="reset" className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              title="Save 3D image"
-              aria-label="Save 3D image"
-              onClick={save3D}
-              className="grid h-8 w-8 place-items-center rounded-full hover:bg-fg/10"
-            >
-              <Icon name="camera" className="h-4 w-4" />
-            </button>
+        <div className="absolute inset-x-0 bottom-0 flex justify-center p-3 lg:p-6">
+          <div className="flex items-center gap-1 rounded-xl border border-line bg-bg/90 p-1 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)] backdrop-blur">
+            <div className="w-[9.5rem]">
+              <Segmented
+                small
+                label="Preview"
+                value={printed ? "printed" : "blank"}
+                onChange={(v) => (v === "printed" && printed ? viewerRef.current?.press() : setPrinted(v === "printed"))}
+                options={[
+                  { value: "blank", label: "Blank" },
+                  { value: "printed", label: "Printed" },
+                ]}
+              />
+            </div>
+            <span className="mx-0.5 h-5 w-px bg-line" aria-hidden />
+            <IconBtn icon="rotate" label="Auto-rotate" active={autoRotate} onClick={() => setAutoRotate((v) => !v)} />
+            <IconBtn icon="reset" label="Reset view" onClick={() => viewerRef.current?.resetView()} />
+            <IconBtn icon="camera" label="Save a 3D image" onClick={save3D} />
           </div>
         </div>
 
         {/* Phones: switch the preview between 3D and the print area */}
-        <div className="absolute right-3 top-3 z-30 flex rounded-full border border-line bg-bg/85 p-1 backdrop-blur lg:hidden">
-          {(
-            [
-              { v: "3d", l: "3D", icon: "cube" },
-              { v: "print", l: "Print area", icon: "frame" },
-            ] as const
-          ).map((o) => (
-            <button
-              key={o.v}
-              type="button"
-              aria-pressed={view === o.v}
-              onClick={() => setView(o.v)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] ${view === o.v ? "bg-fg text-bg" : "text-fg/70"}`}
-            >
-              <Icon name={o.icon} className="h-4 w-4" />
-              {o.l}
-            </button>
-          ))}
+        <div className="absolute right-3 top-3 z-30 rounded-xl border border-line bg-bg/90 p-1 backdrop-blur lg:hidden">
+          <Segmented
+            small
+            label="View"
+            value={view}
+            onChange={setView}
+            options={[
+              { value: "3d", label: "3D", icon: "cube" },
+              { value: "print", label: "Print area", icon: "frame" },
+            ]}
+          />
         </div>
 
-        {!ready && <div className="absolute inset-0 grid place-items-center eyebrow text-dim">loading studio…</div>}
+        {!ready && <div className="absolute inset-0 grid place-items-center text-[13px] text-dim">Loading studio…</div>}
       </section>
 
       {/* Left column: tools */}
       <div className="sa-left lg:border-r lg:border-line">
-        <nav className="sa-tabs flex border-b border-line bg-bg" aria-label="Studio tools">
-          {tabs.map((t) => {
-            const on = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setTab(t.id)}
-                className={`relative flex flex-1 items-center justify-center gap-1.5 py-3 text-[13px] transition-colors ${on ? "text-fg" : "text-dim hover:text-fg"}`}
-              >
-                <Icon name={t.icon} className="h-4 w-4" />
-                {t.label}
-                {t.id === "edit" && sel && <span className="absolute right-3 top-2.5 h-1.5 w-1.5 rounded-full bg-fg" aria-hidden />}
-                <span className={`absolute inset-x-3 -bottom-px h-px ${on ? "bg-fg" : "bg-transparent"}`} aria-hidden />
-              </button>
-            );
-          })}
-        </nav>
+        <div className="sa-tabs border-b border-line bg-bg p-3 lg:px-5 lg:pb-4 lg:pt-5">
+          <Segmented label="Studio tools" value={tab} onChange={setTab} options={tabs} />
+        </div>
         <div className={`sa-panel thin-scroll min-h-0 overflow-y-auto p-4 lg:flex-1 lg:p-5 ${tab === "edit" ? "hidden" : ""}`}>
           {tab === "product" ? productPanel : tab === "templates" ? templatesPanel : addPanel}
         </div>
@@ -764,16 +811,18 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
           }`}
           aria-label="Print area"
         >
-          <div className="mb-2 flex items-center justify-between gap-2 pr-[14.5rem] lg:mb-3 lg:pr-0">
-            <p className="eyebrow hidden text-dim lg:block">print area</p>
-            <div className="flex gap-1.5">
+          <div className="mb-2 flex min-h-8 items-center justify-between gap-2 pr-[12.5rem] lg:mb-3 lg:pr-0">
+            <h3 className="hidden text-[13px] font-medium lg:block">Print area</h3>
+            <div className="-mr-1.5 flex">
               <IconBtn icon="undo" label="Undo (Ctrl+Z)" disabled={!hist.undo} onClick={() => void ed()?.undo()} />
               <IconBtn icon="redo" label="Redo (Ctrl+Shift+Z)" disabled={!hist.redo} onClick={() => void ed()?.redo()} />
             </div>
           </div>
+          {/* The padding lives on this wrapper: the editor fits the canvas to the inner frame. */}
+          <div className="relative flex min-h-0 flex-1 lg:h-[30vh] lg:flex-none lg:rounded-lg lg:bg-panel lg:p-4">
           <div
             ref={frameRef}
-            className="relative flex min-h-0 flex-1 items-center justify-center lg:h-[30vh] lg:flex-none"
+            className="relative flex min-h-0 flex-1 items-center justify-center"
             onDragOver={(e) => {
               e.preventDefault();
               setDropping(true);
@@ -787,7 +836,7 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
             }}
           >
             <div
-              className={`relative shadow-[0_0_0_1px_var(--line),0_12px_40px_-18px_rgba(0,0,0,0.35)] ${transparent ? "" : "checker"}`}
+              className={`relative shadow-[0_0_0_1px_var(--line),0_10px_30px_-16px_rgba(0,0,0,0.4)] ${transparent ? "" : "checker"}`}
               style={{ width: cssSize.w || undefined, height: cssSize.h || undefined, background: frameBg }}
             >
               <div ref={hostRef} className="absolute inset-0" />
@@ -806,12 +855,13 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
               <span aria-hidden className="pointer-events-none absolute inset-[3%] border border-dashed border-white/70 mix-blend-difference" />
             </div>
             {dropping && (
-              <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-lg border-2 border-dashed border-fg bg-bg/80 text-[14px]">
+              <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-lg border-2 border-dashed border-fg bg-bg/85 text-[13px] font-medium">
                 Drop photos to add them
               </div>
             )}
           </div>
-          <p className="mt-2 hidden text-[12px] leading-snug text-dim lg:block">Keep names and faces inside the dashed line.</p>
+          </div>
+          <p className="mt-2.5 hidden text-[12px] leading-snug text-dim lg:block">Keep names and faces inside the dashed line.</p>
         </section>
 
         <div className={`sa-panel thin-scroll min-h-0 overflow-y-auto p-4 lg:flex-1 lg:p-5 ${!desktop && tab !== "edit" ? "hidden" : ""}`}>
@@ -819,9 +869,16 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
         </div>
 
         <section className="sa-order border-t border-line bg-bg px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:p-5" aria-label="Order">
-          <div className="flex items-center gap-3">
-            <div className="flex shrink-0 items-center rounded-full border border-line">
-              <button type="button" aria-label="Fewer" onClick={() => setQty((q) => Math.max(1, q - 1))} className="grid h-9 w-9 place-items-center">
+          <div className="flex items-center gap-3 lg:justify-between">
+            <span className="hidden text-[13px] font-medium lg:block">Quantity</span>
+            <div className="flex h-9 shrink-0 items-center rounded-lg border border-line bg-raise">
+              <button
+                type="button"
+                aria-label="Fewer"
+                disabled={qty <= 1}
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                className="grid h-full w-9 place-items-center text-fg/70 hover:text-fg disabled:opacity-30"
+              >
                 <Icon name="minus" className="h-4 w-4" />
               </button>
               <input
@@ -830,42 +887,50 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
                 min={1}
                 value={qty}
                 onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-                className="w-9 bg-transparent text-center text-[15px] tabular-nums outline-none"
+                className="h-full w-10 border-x border-line bg-transparent text-center text-[14px] font-medium tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               />
-              <button type="button" aria-label="More" onClick={() => setQty((q) => q + 1)} className="grid h-9 w-9 place-items-center">
+              <button
+                type="button"
+                aria-label="More"
+                onClick={() => setQty((q) => q + 1)}
+                className="grid h-full w-9 place-items-center text-fg/70 hover:text-fg"
+              >
                 <Icon name="add" className="h-4 w-4" />
               </button>
             </div>
-            <div className="min-w-0 flex-1 text-right lg:text-right">
-              <p className="text-[clamp(1.2rem,2vw,1.6rem)] leading-none tabular-nums tracking-[-0.03em]">{total != null ? `R${total}` : "Quote"}</p>
-              <p className="mt-1 truncate text-[11px] text-dim">{product.price != null ? `R${product.price} each, estimate` : "priced on WhatsApp"}</p>
+            <div className="min-w-0 flex-1 text-right lg:hidden">
+              <p className="font-sans text-[20px] leading-none tracking-[-0.02em] tabular-nums">{total != null ? `R${total}` : "Quote"}</p>
+              <p className="mt-1 truncate text-[11px] text-dim">{product.price != null ? "Estimate" : "Priced on WhatsApp"}</p>
             </div>
             <button
               type="button"
               onClick={orderOnWhatsApp}
               disabled={!ready}
-              className="flex shrink-0 items-center gap-2 rounded-full bg-fg px-4 py-2.5 text-[14px] text-bg transition-transform hover:scale-[1.03] disabled:opacity-50 lg:hidden"
+              className="flex h-10 shrink-0 items-center gap-2 rounded-lg bg-fg px-4 text-[14px] font-medium text-bg transition-opacity hover:opacity-85 disabled:opacity-40 lg:hidden"
             >
               Order
               <Icon name="send" className="h-4 w-4" />
             </button>
           </div>
-          <button
-            type="button"
-            onClick={orderOnWhatsApp}
-            disabled={!ready}
-            className="mt-4 hidden w-full items-center justify-center gap-2 rounded-full bg-fg py-3 text-[15px] text-bg transition-transform hover:scale-[1.02] disabled:opacity-50 lg:flex"
-          >
+
+          <div className="mt-4 hidden items-end justify-between gap-3 border-t border-line pt-4 lg:flex">
+            <div>
+              <p className="text-[12px] text-dim">{product.price != null ? "Estimated total" : "Price"}</p>
+              <p className="mt-0.5 font-sans text-[28px] leading-none tracking-[-0.03em] tabular-nums">{total != null ? `R${total}` : "On request"}</p>
+            </div>
+            <p className="pb-0.5 text-[12px] text-dim">{product.price != null ? `${formatPrice(product.price)} each` : "Quoted on WhatsApp"}</p>
+          </div>
+          <button type="button" onClick={orderOnWhatsApp} disabled={!ready} className={`${BTN_PRIMARY} mt-4 hidden h-11 lg:flex`}>
             Order on WhatsApp
             <Icon name="send" className="h-4 w-4" />
           </button>
-          <div className="mt-3 hidden items-center justify-between gap-3 lg:flex">
-            <p className="text-[11px] leading-snug text-dim">We confirm the price and check your design before printing.</p>
+          <div className="mt-3 hidden items-start justify-between gap-4 lg:flex">
+            <p className="text-[12px] leading-snug text-dim">We confirm the price and check your design before printing.</p>
             <button
               type="button"
               onClick={() => ed() && download(ed()!.exportPNG(), `authentic-${product.id}-design.png`)}
               disabled={!ready}
-              className="flex shrink-0 items-center gap-1.5 text-[12px] text-dim hover:text-fg"
+              className="flex shrink-0 items-center gap-1.5 text-[12px] font-medium text-dim transition-colors hover:text-fg"
             >
               <Icon name="download" className="h-3.5 w-3.5" />
               Print file
@@ -888,7 +953,10 @@ export default function Studio({ initialProduct }: { initialProduct?: string }) 
       />
 
       {toast && (
-        <div role="status" className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-full bg-fg px-4 py-2 text-[14px] text-bg shadow-xl lg:bottom-6">
+        <div
+          role="status"
+          className="fixed bottom-24 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-fg px-4 py-2.5 text-[13px] font-medium text-bg shadow-lg lg:bottom-6"
+        >
           {toast}
         </div>
       )}
